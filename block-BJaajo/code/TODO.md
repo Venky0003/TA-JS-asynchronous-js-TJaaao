@@ -6,7 +6,13 @@ Create the execution context diagram of the following code. Also write the outpu
 console.log('First');
 setTimeout(() => console.log('Second'), 0);
 console.log('Third');
+
+//output
+//First
+//Third
+//Second
 ```
+![image](img/eventloop-1.jpg)
 
 2.
 
@@ -18,8 +24,14 @@ function secondCall() {
 setTimeout(secondCall, 2000); // execute this code after 1000 ms
 setTimeout(() => console.log('Third'), 0); // execute this code after 1000 ms
 console.log('Third');
-```
 
+//output
+//First
+//Third
+//Third
+//Second
+```
+![image](img/eventloop-2.jpg)
 3.
 
 ```js
@@ -30,7 +42,14 @@ function secondCall() {
 setTimeout(secondCall, 1000); // execute this code after 1000 ms
 setTimeout(() => console.log('Third'), 0);
 console.log('Fourth');
+
+//output
+//First
+//Fourth
+//Third
+//Second
 ```
+![Alt text](img/evenloop-3.jpg)
 
 4.
 
@@ -42,7 +61,14 @@ function secondCall() {
 setTimeout(secondCall, 1000); // execute this code after 1000 ms
 setTimeout(() => console.log('Third'), 0);
 console.log('Fourth');
+
+//output
+//First
+//Fourth
+//Third
+//Second
 ```
+![Alt text](img/evenloop-3.jpg)
 
 5. What will be the output of the code below and why? Also write the timing of the output starting with 0 ms.
 
@@ -60,13 +86,25 @@ setTimeout(function exec() {
 }, 0);
 runWhileLoopForNSeconds(3);
 console.log('Third');
+
+//output
+//First
+//Third (3000ms wait)
+//Second (3001ms wait)
 ```
 
 6. Convert the synchronous code given below into asynchronous. If you execute this code it will print one, two and three. Change the code in such a way that it should print `one`, `three` and `two`. You are not allowed to move the code up and down.
 
 ```js
 console.log('one');
-console.log('two');
+console.log('two')
+console.log('three');
+
+//converted code
+console.log('one');
+setTimeout(() => { 
+  console.log('two')
+  },0);
 console.log('three');
 ```
 
@@ -75,6 +113,13 @@ console.log('three');
 ```js
 console.log('one');
 console.log('two');
+console.log('three');
+
+//converted code
+console.log('one');
+setTimeout(() => { 
+  console.log('two')
+  },1000);
 console.log('three');
 ```
 
