@@ -1,104 +1,115 @@
-(function(){
-let todoUl = document.querySelector('.todo-items');
-let todoInput = document.getElementById('todoInput');
+(function () {
+  let todoUl = document.querySelector('.todo-items');
+  let todoInput = document.querySelector(`input[type ="text"]`);
+  let url = `https://basic-todo-api.vercel.app/api/todo`;
 
-let todos = [];
-
-function listTodos() {
-  let title = todoInput.value.trim();
-  console.log('Title:', title);
-  if (title === '' || title.length <= 2) {
-    alert('Please enter a valid todo');
+  function handleDelete(id) {
+    fetch(url + `/${id}`, {
+      method: 'DELETE', // *GET, POST, PUT, DELETE, etc.
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }).then(() => {
+      fetchData();
+    });
   }
-  let newTodo = { id: Date.now(), title };
-  fetch(`https://basic-todo-api.vercel.app/api/todo`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(newTodo),
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      todos.push(data);
-      displayTodos();
-      todoInput.value = '';
-    })
-    .catch((error) => {
-      console.log(error);
-    });
-}
 
-function editTodo(id) {
-  const newTitle = prompt('Enter new title');
-  const todo = todos.find((todo) => todo.id === id);
-  if (!newTitle) {
-    alert('Please enter a valid title');
-    return;
+  function handleToggle(id, status) {
+    let data = {
+      todo: {
+        isCompleted: !status,
+      },
+    };
+    fetch(url + `/${id}`, {
+      method: 'PUT', // *GET, POST, PUT, DELETE, etc.
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    }).then(() => {
+      fetchData();
+    });
   }
-  fetch(`basic-todo-api.vercel.app/api/todo/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...todo, title: newTitle }),
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      todos = todos.map((todo) => (todo.id === id ? data : todo));
-      displayTodos();
-    })
-    .catch((error) => {
-      console.error('Error:', error);
-    });
-}
 
-function deleteTodo(id) {
-  fetch(`basic-todo-api.vercel.app/api/todo/${id}`, {
-    method: 'DELETE',
-  })
-    .then(() => {
-      todos = todos.filter((todo) => todo.id !== id);
-      displayTodos();
-    })
-    .catch((error) => {
-      console.error('Error:', error);
+  function editTodo(event, id, title) {
+    let input = document.createElement('input');
+    input.value = title;
+    let p = event.target;
+    let parent = event.target.parentElement;
+    parent.replaceChild(input, p);
+    console.log(input, p, parent);
+    input.addEventListener('keyup', (event) => {
+      if (event.keyCode === 13 && event.target.value) {
+        let data = {
+          todo: {
+            title: event.target.value,
+          },
+        };
+        fetch(url + `/${id}`, {
+          method: 'PUT', // *GET, POST, PUT, DELETE, etc.
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        }).then(() => {
+          fetchData();
+        });
+      }
     });
-}
+  }
 
-function displayTodos() {
+  function displayTodos(data) {
     todoUl.innerHTML = '';
-  todos.forEach((todo) => {
-    let li = document.createElement('li');
-    let p = document.createElement('p');
-    p.innerText = todo.title;
-    p.addEventListener('dblclick', () => {
-        editTodo(todo.id, p);
+    data.forEach((todo) => {
+      let li = document.createElement('li');
+      let input = document.createElement('input');
+      input.type = 'checkbox';
+      input.checked = todo.isCompleted;
+      input.addEventListener('click', () =>
+        handleToggle(todo._id, todo.isCompleted)
+      );
+      input.setAttribute('data-id', todo._id);
+      let p = document.createElement('p');
+      p.innerText = todo.title;
+      p.addEventListener('dblclick', (event) => {
+        editTodo(event, todo._id, todo.title);
       });
-    let span = document.createElement('span');
-    let button = document.createElement('button');
-    button.innerText = 'Delete';
-    button.addEventListener('click', () => deleteTodo(todo.id));
-    span.append( button);
-    li.append(p, span);
-    todoUl.append(li);
-  });
-}
-
-function fetchTodos() {
-  fetch(`https://basic-todo-api.vercel.app/api/todo`)
-    .then((res) => res.json())
-    .then((data) => {
-      todos = Array.from(data);
-      displayTodos(todos);
-    })
-    .catch((error) => {
-      console.log(error);
+      let span = document.createElement('span');
+      span.innerText = 'X';
+      span.addEventListener('click', () => handleDelete(todo._id));
+      span.setAttribute('data-id', todo._id);
+      li.append(input, p, span);
+      todoUl.append(li);
     });
-}
-
-fetchTodos();
-
-todoInput.addEventListener('keyup', function (event) {
-  if (event.keyCode === 13) {
-    event.preventDefault();
-    listTodos();
   }
-});
-})()
+
+  function fetchData() {
+    fetch(url)
+      .then((res) => res.json())
+      .then((allTodos) => {
+        displayTodos(allTodos.todos);
+      });
+  }
+  function addTodo(event) {
+    if (event.keyCode === 13 && event.target.value.trim()) {
+      let data = {
+        todo: {
+          title: event.target.value,
+          isCompleted: false,
+        },
+      };
+      fetch(url, {
+        method: 'POST', // *GET, POST, PUT, DELETE, etc.
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data), // body data type must match "Content-Type" header
+      }).then(() => {
+        event.target.value = '';
+        fetchData();
+      });
+    }
+  }
+  todoInput.addEventListener('keyup', addTodo);
+  fetchData();
+})();
